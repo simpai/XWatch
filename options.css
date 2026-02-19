@@ -1,0 +1,107 @@
+﻿:root {
+  color-scheme: light;
+  font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+}
+
+body {
+  margin: 0;
+  padding: 20px;
+  background: #f4f6f8;
+  color: #0f1419;
+}
+
+main {
+  max-width: 640px;
+}
+
+h1 {
+  margin: 0 0 12px;
+  font-size: 24px;
+}
+
+.card {
+  background: #fff;
+  border: 1px solid #d8e0e6;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 14px;
+}
+
+h2 {
+  margin: 0 0 12px;
+  font-size: 18px;
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 8px 0;
+}
+
+button {
+  margin-top: 14px;
+  border: 0;
+  border-radius: 999px;
+  padding: 8px 16px;
+  cursor: pointer;
+  background: #1d9bf0;
+  color: #fff;
+  font-weight: 600;
+}
+
+input[type="text"] {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #c7d2db;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font: inherit;
+}
+
+.table-wrap {
+  margin-top: 8px;
+  border: 1px solid #d8e0e6;
+  border-radius: 10px;
+  overflow: hidden;
+  max-height: 420px;
+  overflow-y: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+th, td {
+  padding: 8px 10px;
+  border-bottom: 1px solid #eef2f5;
+  text-align: left;
+  vertical-align: top;
+}
+
+thead th {
+  position: sticky;
+  top: 0;
+  background: #f7fafc;
+  z-index: 1;
+}
+
+td.comment {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.delete-btn {
+  margin: 0;
+  padding: 6px 10px;
+  font-size: 12px;
+  background: #dc2626;
+}
+
+.empty {
+  margin: 10px 0 0;
+  color: #536471;
+  font-size: 13px;
+}

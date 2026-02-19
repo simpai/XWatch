@@ -1,0 +1,45 @@
+﻿<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>XWatch 설정</title>
+  <link rel="stylesheet" href="options.css" />
+</head>
+<body>
+  <main>
+    <h1>XWatch 설정</h1>
+    <section class="card">
+      <h2>chrome.storage.sync 사용량</h2>
+      <div class="row"><span>총 할당량</span><strong id="quota">-</strong></div>
+      <div class="row"><span>사용량</span><strong id="used">-</strong></div>
+      <div class="row"><span>남은 공간</span><strong id="remaining">-</strong></div>
+      <div class="row"><span>XWatch 데이터</span><strong id="key-used">-</strong></div>
+      <div class="row"><span>저장된 유저 수</span><strong id="user-count">-</strong></div>
+      <button id="refresh" type="button">새로고침</button>
+    </section>
+    <section class="card">
+      <h2>저장된 메모 뷰어</h2>
+      <div class="row">
+        <input id="search" type="text" placeholder="핸들 또는 코멘트 검색" />
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>User ID</th>
+              <th>Handle</th>
+              <th>Comment</th>
+              <th>Updated</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="viewer-body"></tbody>
+        </table>
+      </div>
+      <p id="viewer-empty" class="empty">표시할 데이터가 없습니다.</p>
+    </section>
+  </main>
+  <script src="options.js"></script>
+</body>
+</html>
