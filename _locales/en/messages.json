@@ -1,0 +1,118 @@
+{
+  "extName": {
+    "message": "XMate",
+    "description": "Extension name"
+  },
+  "extDescription": {
+    "message": "Profile notes and relationship memory helper for X, synced with browser storage.",
+    "description": "Extension description in store and browser UI"
+  },
+  "profileMemoLabel": {
+    "message": "XMate Memo",
+    "description": "Profile memo label"
+  },
+  "profileMemoPlaceholder": {
+    "message": "Write a note",
+    "description": "Profile memo input placeholder"
+  },
+  "profileSaveButton": {
+    "message": "Save",
+    "description": "Save button text"
+  },
+  "statusSaving": {
+    "message": "Saving...",
+    "description": "Status while saving"
+  },
+  "statusDeleted": {
+    "message": "Deleted",
+    "description": "Status when note is removed"
+  },
+  "statusSaved": {
+    "message": "Saved",
+    "description": "Status when note is saved"
+  },
+  "statusNoChange": {
+    "message": "No changes",
+    "description": "Status when nothing changed"
+  },
+  "statusSaveFailed": {
+    "message": "Save failed",
+    "description": "Status when save fails"
+  },
+  "optionsTitle": {
+    "message": "XMate Settings",
+    "description": "Options page title"
+  },
+  "optionsMainTitle": {
+    "message": "XMate Settings",
+    "description": "Options page main heading"
+  },
+  "optionsStorageTitle": {
+    "message": "chrome.storage.sync Usage",
+    "description": "Storage section title"
+  },
+  "optionsTotalQuota": {
+    "message": "Total quota",
+    "description": "Total quota label"
+  },
+  "optionsUsed": {
+    "message": "Used",
+    "description": "Used space label"
+  },
+  "optionsRemaining": {
+    "message": "Remaining",
+    "description": "Remaining space label"
+  },
+  "optionsDataUsage": {
+    "message": "XMate data",
+    "description": "Extension data usage label"
+  },
+  "optionsUserCount": {
+    "message": "Saved users",
+    "description": "Saved users count label"
+  },
+  "optionsRefresh": {
+    "message": "Refresh",
+    "description": "Refresh button text"
+  },
+  "optionsViewerTitle": {
+    "message": "Saved Notes Viewer",
+    "description": "Viewer section title"
+  },
+  "optionsSearchPlaceholder": {
+    "message": "Search by handle or comment",
+    "description": "Search input placeholder"
+  },
+  "optionsColUserId": {
+    "message": "User ID",
+    "description": "Viewer table user ID column"
+  },
+  "optionsColHandle": {
+    "message": "Handle",
+    "description": "Viewer table handle column"
+  },
+  "optionsColComment": {
+    "message": "Comment",
+    "description": "Viewer table comment column"
+  },
+  "optionsColUpdated": {
+    "message": "Updated",
+    "description": "Viewer table updated column"
+  },
+  "optionsColAction": {
+    "message": "Action",
+    "description": "Viewer table action column"
+  },
+  "optionsViewerEmpty": {
+    "message": "No data to display.",
+    "description": "Viewer empty text"
+  },
+  "optionsDelete": {
+    "message": "Delete",
+    "description": "Delete button text"
+  },
+  "optionsQuotaFetchFailed": {
+    "message": "Failed",
+    "description": "Failed label when storage info cannot be loaded"
+  }
+}

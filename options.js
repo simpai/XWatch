@@ -1,6 +1,11 @@
 const STORAGE_KEY = "xwatch_users_v1";
 let usersCache = {};
 
+function i18n(key, fallback = "") {
+  const message = chrome.i18n.getMessage(key);
+  return message || fallback;
+}
+
 function formatBytes(bytes) {
   if (!Number.isFinite(bytes)) return "-";
   if (bytes < 1024) return `${bytes} B`;
@@ -79,7 +84,7 @@ function renderViewer() {
     const delButton = document.createElement("button");
     delButton.type = "button";
     delButton.className = "delete-btn";
-    delButton.textContent = "삭제";
+    delButton.textContent = i18n("optionsDelete", "Delete");
     delButton.addEventListener("click", async () => {
       const response = await sendMessage("XWATCH_DELETE_USER", { userId: item.userId });
       if (!response?.ok) return;
@@ -119,7 +124,7 @@ async function refreshUsage() {
   ]);
 
   if (!infoResponse?.ok) {
-    setText("quota", "조회 실패");
+    setText("quota", i18n("optionsQuotaFetchFailed", "Failed"));
     return;
   }
 
@@ -134,10 +139,37 @@ async function refreshUsage() {
   renderViewer();
 }
 
+function applyI18n() {
+  document.title = i18n("optionsTitle", "XMate Settings");
+  setText("options-main-title", i18n("optionsMainTitle", "XMate Settings"));
+  setText("options-storage-title", i18n("optionsStorageTitle", "chrome.storage.sync Usage"));
+  setText("options-total-quota-label", i18n("optionsTotalQuota", "Total quota"));
+  setText("options-used-label", i18n("optionsUsed", "Used"));
+  setText("options-remaining-label", i18n("optionsRemaining", "Remaining"));
+  setText("options-data-usage-label", i18n("optionsDataUsage", "XMate data"));
+  setText("options-user-count-label", i18n("optionsUserCount", "Saved users"));
+  setText("refresh", i18n("optionsRefresh", "Refresh"));
+  setText("options-viewer-title", i18n("optionsViewerTitle", "Saved Notes Viewer"));
+  setText("options-col-user-id", i18n("optionsColUserId", "User ID"));
+  setText("options-col-handle", i18n("optionsColHandle", "Handle"));
+  setText("options-col-comment", i18n("optionsColComment", "Comment"));
+  setText("options-col-updated", i18n("optionsColUpdated", "Updated"));
+  setText("options-col-action", i18n("optionsColAction", "Action"));
+  setText("viewer-empty", i18n("optionsViewerEmpty", "No data to display."));
+
+  const search = document.getElementById("search");
+  if (search) {
+    search.placeholder = i18n("optionsSearchPlaceholder", "Search by handle or comment");
+  }
+}
+
 document.getElementById("refresh")?.addEventListener("click", refreshUsage);
 document.getElementById("search")?.addEventListener("input", renderViewer);
 
-document.addEventListener("DOMContentLoaded", refreshUsage);
+document.addEventListener("DOMContentLoaded", () => {
+  applyI18n();
+  refreshUsage();
+});
 
 chrome.storage.onChanged.addListener((changes, areaName) => {
   if (areaName !== "sync") return;

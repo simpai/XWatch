@@ -1,0 +1,118 @@
+{
+  "extName": {
+    "message": "XMate",
+    "description": "익스텐션 이름"
+  },
+  "extDescription": {
+    "message": "X에서 프로필 메모와 관계 기록을 저장하고 브라우저 동기화로 관리하는 도구입니다.",
+    "description": "익스텐션 설명"
+  },
+  "profileMemoLabel": {
+    "message": "XMate 메모",
+    "description": "프로필 메모 라벨"
+  },
+  "profileMemoPlaceholder": {
+    "message": "메모 입력",
+    "description": "프로필 메모 입력 플레이스홀더"
+  },
+  "profileSaveButton": {
+    "message": "저장",
+    "description": "저장 버튼 텍스트"
+  },
+  "statusSaving": {
+    "message": "저장 중...",
+    "description": "저장 중 상태"
+  },
+  "statusDeleted": {
+    "message": "삭제됨",
+    "description": "삭제 완료 상태"
+  },
+  "statusSaved": {
+    "message": "저장됨",
+    "description": "저장 완료 상태"
+  },
+  "statusNoChange": {
+    "message": "변경 없음",
+    "description": "변경 없음 상태"
+  },
+  "statusSaveFailed": {
+    "message": "저장 실패",
+    "description": "저장 실패 상태"
+  },
+  "optionsTitle": {
+    "message": "XMate 설정",
+    "description": "설정 페이지 타이틀"
+  },
+  "optionsMainTitle": {
+    "message": "XMate 설정",
+    "description": "설정 페이지 메인 제목"
+  },
+  "optionsStorageTitle": {
+    "message": "chrome.storage.sync 사용량",
+    "description": "스토리지 섹션 제목"
+  },
+  "optionsTotalQuota": {
+    "message": "총 할당량",
+    "description": "총 할당량 라벨"
+  },
+  "optionsUsed": {
+    "message": "사용량",
+    "description": "사용량 라벨"
+  },
+  "optionsRemaining": {
+    "message": "남은 공간",
+    "description": "남은 공간 라벨"
+  },
+  "optionsDataUsage": {
+    "message": "XMate 데이터",
+    "description": "익스텐션 데이터 사용량 라벨"
+  },
+  "optionsUserCount": {
+    "message": "저장된 유저 수",
+    "description": "저장된 유저 수 라벨"
+  },
+  "optionsRefresh": {
+    "message": "새로고침",
+    "description": "새로고침 버튼"
+  },
+  "optionsViewerTitle": {
+    "message": "저장된 메모 뷰어",
+    "description": "메모 뷰어 제목"
+  },
+  "optionsSearchPlaceholder": {
+    "message": "핸들 또는 코멘트 검색",
+    "description": "검색 입력 플레이스홀더"
+  },
+  "optionsColUserId": {
+    "message": "사용자 ID",
+    "description": "유저 ID 컬럼 제목"
+  },
+  "optionsColHandle": {
+    "message": "핸들",
+    "description": "핸들 컬럼 제목"
+  },
+  "optionsColComment": {
+    "message": "코멘트",
+    "description": "코멘트 컬럼 제목"
+  },
+  "optionsColUpdated": {
+    "message": "수정 시각",
+    "description": "수정 시각 컬럼 제목"
+  },
+  "optionsColAction": {
+    "message": "작업",
+    "description": "동작 컬럼 제목"
+  },
+  "optionsViewerEmpty": {
+    "message": "표시할 데이터가 없습니다.",
+    "description": "뷰어 빈 상태 문구"
+  },
+  "optionsDelete": {
+    "message": "삭제",
+    "description": "삭제 버튼 텍스트"
+  },
+  "optionsQuotaFetchFailed": {
+    "message": "조회 실패",
+    "description": "스토리지 조회 실패 문구"
+  }
+}
