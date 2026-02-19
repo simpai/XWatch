@@ -39,6 +39,38 @@
     "message": "저장 실패",
     "description": "저장 실패 상태"
   },
+  "scheduleDelay5m": {
+    "message": "5분뒤",
+    "description": "예약 시간 단축 버튼: 5분 뒤"
+  },
+  "scheduleDelay10m": {
+    "message": "10분뒤",
+    "description": "예약 시간 단축 버튼: 10분 뒤"
+  },
+  "scheduleDelay30m": {
+    "message": "30분뒤",
+    "description": "예약 시간 단축 버튼: 30분 뒤"
+  },
+  "scheduleDelay1h": {
+    "message": "1시간뒤",
+    "description": "예약 시간 단축 버튼: 1시간 뒤"
+  },
+  "scheduleAdjustPlus1h": {
+    "message": "+1시간",
+    "description": "예약 시간 조정 버튼: 1시간 증가"
+  },
+  "scheduleAdjustMinus1h": {
+    "message": "-1시간",
+    "description": "예약 시간 조정 버튼: 1시간 감소"
+  },
+  "scheduleAdjustPlus1d": {
+    "message": "+1일",
+    "description": "예약 시간 조정 버튼: 1일 증가"
+  },
+  "scheduleAdjustMinus1d": {
+    "message": "-1일",
+    "description": "예약 시간 조정 버튼: 1일 감소"
+  },
   "optionsTitle": {
     "message": "XMate 설정",
     "description": "설정 페이지 타이틀"

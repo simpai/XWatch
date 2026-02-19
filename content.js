@@ -591,17 +591,17 @@ function createScheduleAssistPanel(dialog) {
   const adjustRow = panel.querySelector('[data-row="adjust"]');
 
   const delayButtons = [
-    { label: "5분뒤", minutes: 5 },
-    { label: "10분뒤", minutes: 10 },
-    { label: "30분뒤", minutes: 30 },
-    { label: "1시간뒤", minutes: 60 }
+    { label: i18n("scheduleDelay5m", "In 5m"), minutes: 5 },
+    { label: i18n("scheduleDelay10m", "In 10m"), minutes: 10 },
+    { label: i18n("scheduleDelay30m", "In 30m"), minutes: 30 },
+    { label: i18n("scheduleDelay1h", "In 1h"), minutes: 60 }
   ];
 
   const adjustButtons = [
-    { label: "+1시간", hours: 1, days: 0 },
-    { label: "-1시간", hours: -1, days: 0 },
-    { label: "+1일", hours: 0, days: 1 },
-    { label: "-1일", hours: 0, days: -1 }
+    { label: i18n("scheduleAdjustPlus1h", "+1h"), hours: 1, days: 0 },
+    { label: i18n("scheduleAdjustMinus1h", "-1h"), hours: -1, days: 0 },
+    { label: i18n("scheduleAdjustPlus1d", "+1d"), hours: 0, days: 1 },
+    { label: i18n("scheduleAdjustMinus1d", "-1d"), hours: 0, days: -1 }
   ];
 
   for (const buttonConfig of delayButtons) {
@@ -1122,6 +1122,7 @@ function createProfileBox(handle, user, userIdHint) {
 function mountProfileBox(handle, user, userIdHint) {
   const primaryColumn = document.querySelector('main [data-testid="primaryColumn"]');
   if (!primaryColumn) return;
+  const refNode = primaryColumn.querySelector('div[data-testid="UserDescription"]');
 
   const resolvedUserId = normalizeUserId(user?.userId || userIdHint || getKnownUserIdForHandle(handle));
   const existing = document.getElementById(PROFILE_BOX_ID);
@@ -1140,18 +1141,22 @@ function mountProfileBox(handle, user, userIdHint) {
     if (!isSameHandle) {
       existing.dataset.dirty = "0";
     }
+
+    if (refNode && existing.parentElement) {
+      const shouldMove =
+        existing.parentElement !== refNode.parentElement ||
+        existing.previousElementSibling !== refNode;
+      if (shouldMove) {
+        refNode.insertAdjacentElement("afterend", existing);
+      }
+    }
+
     return;
   }
 
-  const refNode = primaryColumn.querySelector('div[data-testid="UserDescription"]') ||
-    primaryColumn.querySelector('div[data-testid="UserName"]');
+  if (!refNode) return;
   const box = createProfileBox(handle, user, resolvedUserId);
-
-  if (refNode) {
-    refNode.insertAdjacentElement("afterend", box);
-  } else {
-    primaryColumn.prepend(box);
-  }
+  refNode.insertAdjacentElement("afterend", box);
 }
 
 function removeProfileBox() {

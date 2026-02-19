@@ -39,6 +39,38 @@
     "message": "Save failed",
     "description": "Status when save fails"
   },
+  "scheduleDelay5m": {
+    "message": "In 5m",
+    "description": "Schedule shortcut button: in 5 minutes"
+  },
+  "scheduleDelay10m": {
+    "message": "In 10m",
+    "description": "Schedule shortcut button: in 10 minutes"
+  },
+  "scheduleDelay30m": {
+    "message": "In 30m",
+    "description": "Schedule shortcut button: in 30 minutes"
+  },
+  "scheduleDelay1h": {
+    "message": "In 1h",
+    "description": "Schedule shortcut button: in 1 hour"
+  },
+  "scheduleAdjustPlus1h": {
+    "message": "+1h",
+    "description": "Schedule adjust button: plus one hour"
+  },
+  "scheduleAdjustMinus1h": {
+    "message": "-1h",
+    "description": "Schedule adjust button: minus one hour"
+  },
+  "scheduleAdjustPlus1d": {
+    "message": "+1d",
+    "description": "Schedule adjust button: plus one day"
+  },
+  "scheduleAdjustMinus1d": {
+    "message": "-1d",
+    "description": "Schedule adjust button: minus one day"
+  },
   "optionsTitle": {
     "message": "XMate Settings",
     "description": "Options page title"
