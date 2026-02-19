@@ -1,7 +1,7 @@
 ﻿# XMate Store Listing (EN)
 
 ## Summary (132 chars)
-A productivity extension that saves profile notes on X and shows them directly in your timeline.
+A productivity extension for X profile notes with quick scheduled-time shortcut buttons.
 
 ## Description
 XMate helps you save and reuse profile notes on X (formerly Twitter).
@@ -12,6 +12,9 @@ Key features:
 - userId-based storage so notes survive handle changes
 - Multi-device sync with `chrome.storage.sync`
 - View/search/delete all saved notes in the settings page
+- Quick schedule-time shortcuts in the scheduling modal
+  - in 5/10/30/60 minutes
+  - +1h/-1h and +1d/-1d
 
 Data handling:
 - Only user-entered notes are stored.

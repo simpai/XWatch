@@ -4,7 +4,7 @@
     "description": "익스텐션 이름"
   },
   "extDescription": {
-    "message": "X에서 프로필 메모와 관계 기록을 저장하고 브라우저 동기화로 관리하는 도구입니다.",
+    "message": "X에서 프로필 메모를 저장/표시하고 예약 게시 시간 설정을 빠르게 도와주는 도구입니다.",
     "description": "익스텐션 설명"
   },
   "profileMemoLabel": {

@@ -4,7 +4,7 @@
     "description": "Extension name"
   },
   "extDescription": {
-    "message": "Profile notes and relationship memory helper for X, synced with browser storage.",
+    "message": "Save profile notes on X and quickly adjust scheduled post time with shortcut buttons.",
     "description": "Extension description in store and browser UI"
   },
   "profileMemoLabel": {
