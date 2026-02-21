@@ -376,6 +376,55 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
         sendResponse({ ok: true, deleted });
         return;
       }
+      case "XWATCH_DELETE_ALL_USERS": {
+        await ensureLoaded();
+        memoCache = createEmptySnapshot();
+        await persistCache();
+        sendResponse({ ok: true });
+        return;
+      }
+      case "XWATCH_IMPORT_USERS": {
+        await ensureLoaded();
+        const { users, mode } = message;
+        if (mode === "replace") {
+          memoCache = createEmptySnapshot();
+        }
+
+        let mutated = false;
+        const usersArray = Array.isArray(users) ? users : Object.values(users || {});
+        for (const record of usersArray) {
+          if (!record) continue;
+          const normalizedHandle = normalizeHandle(record.handle);
+          const explicitUserId = normalizeUserId(record.userId);
+          let targetUserId = explicitUserId || makeFallbackUserId(normalizedHandle);
+          if (!targetUserId) continue;
+
+          const base = memoCache.usersById[targetUserId] || normalizeUserRecord(targetUserId, normalizedHandle, {});
+          const merged = normalizeUserRecord(
+            targetUserId,
+            normalizedHandle || base.handle,
+            {
+              ...base,
+              ...record,
+              userId: targetUserId,
+              handle: normalizedHandle || base.handle,
+              updatedAt: record.updatedAt || base.updatedAt || nowIso()
+            }
+          );
+
+          memoCache.usersById[targetUserId] = merged;
+          if (merged.handle) {
+            memoCache.handleToId[merged.handle] = targetUserId;
+          }
+          mutated = true;
+        }
+
+        if (mutated || mode === "replace") {
+          await persistCache();
+        }
+        sendResponse({ ok: true });
+        return;
+      }
       case "XWATCH_GET_ALL_USERS": {
         await ensureLoaded();
         sendResponse({

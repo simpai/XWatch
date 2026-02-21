@@ -16,7 +16,14 @@
       <div class="row"><span id="options-remaining-label">Remaining</span><strong id="remaining">-</strong></div>
       <div class="row"><span id="options-data-usage-label">XMate data</span><strong id="key-used">-</strong></div>
       <div class="row"><span id="options-user-count-label">Saved users</span><strong id="user-count">-</strong></div>
-      <button id="refresh" type="button">Refresh</button>
+      <div class="actions-row" style="margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
+        <button id="btn-refresh" type="button">Refresh</button>
+        <button id="btn-export" type="button">Export (JSON)</button>
+        <input type="file" id="file-import" accept=".json" style="display: none;" />
+        <button id="btn-import-append" type="button">Import (Append)</button>
+        <button id="btn-import-replace" type="button">Import (Replace)</button>
+        <button id="btn-delete-all" type="button" style="color: red;">Delete All</button>
+      </div>
     </section>
     <section class="card">
       <h2 id="options-viewer-title">Saved Notes Viewer</h2>

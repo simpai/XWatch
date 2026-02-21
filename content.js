@@ -1114,6 +1114,10 @@ function createProfileBox(handle, user, userIdHint) {
 
     status.textContent = i18n("statusSaveFailed", "Save failed");
     status.dataset.state = "failed";
+
+    if (response?.error?.toLowerCase().includes("quota")) {
+      alert(i18n("optionsQuotaExceeded", "Storage space exceeded. Please delete some users and try again."));
+    }
   });
 
   return box;

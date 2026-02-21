@@ -71,7 +71,15 @@ function renderViewer() {
     userIdTd.textContent = item.userId;
 
     const handleTd = document.createElement("td");
-    handleTd.textContent = item.handle ? `@${item.handle}` : "-";
+    if (item.handle) {
+      const a = document.createElement("a");
+      a.href = `https://x.com/${item.handle}`;
+      a.target = "_blank";
+      a.textContent = `@${item.handle}`;
+      handleTd.appendChild(a);
+    } else {
+      handleTd.textContent = "-";
+    }
 
     const commentTd = document.createElement("td");
     commentTd.className = "comment";
@@ -163,8 +171,64 @@ function applyI18n() {
   }
 }
 
-document.getElementById("refresh")?.addEventListener("click", refreshUsage);
+document.getElementById("btn-refresh")?.addEventListener("click", refreshUsage);
 document.getElementById("search")?.addEventListener("input", renderViewer);
+
+document.getElementById("btn-export")?.addEventListener("click", () => {
+  const dataStr = JSON.stringify(Object.values(usersCache || {}), null, 2);
+  const blob = new Blob([dataStr], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `xwatch_users_${new Date().toISOString().slice(0, 10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+async function handleImport(mode) {
+  const fileInput = document.getElementById("file-import");
+  fileInput.onchange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const users = JSON.parse(text);
+      const response = await sendMessage("XWATCH_IMPORT_USERS", { users, mode });
+      if (!response?.ok) {
+        if (response?.error?.toLowerCase().includes("quota")) {
+          alert(i18n("optionsQuotaExceeded", "Storage space exceeded. Please delete some users and try again."));
+        } else {
+          alert("Failed to import: " + (response?.error || "Unknown error"));
+        }
+      } else {
+        refreshUsage();
+        alert(i18n("optionsImportSuccess", "Import successful."));
+      }
+    } catch (err) {
+      alert("Invalid JSON file");
+    }
+    fileInput.value = ""; // reset
+  };
+  fileInput.click();
+}
+
+document.getElementById("btn-import-append")?.addEventListener("click", () => handleImport("append"));
+document.getElementById("btn-import-replace")?.addEventListener("click", () => {
+  if (confirm(i18n("optionsConfirmReplace", "Are you sure you want to completely replace all saved users?"))) {
+    handleImport("replace");
+  }
+});
+
+document.getElementById("btn-delete-all")?.addEventListener("click", async () => {
+  if (confirm(i18n("optionsConfirmDeleteAll", "Are you sure you want to delete ALL saved users?"))) {
+    const response = await sendMessage("XWATCH_DELETE_ALL_USERS");
+    if (!response?.ok) {
+      alert("Failed to delete all: " + (response?.error || "Unknown error"));
+    } else {
+      refreshUsage();
+    }
+  }
+});
 
 document.addEventListener("DOMContentLoaded", () => {
   applyI18n();

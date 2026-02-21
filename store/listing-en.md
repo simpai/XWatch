@@ -12,6 +12,7 @@ Key features:
 - userId-based storage so notes survive handle changes
 - Multi-device sync with `chrome.storage.sync`
 - View/search/delete all saved notes in the settings page
+- Korean IME input safeguard to reduce last-syllable truncation while composing posts
 - Quick schedule-time shortcuts in the scheduling modal
   - in 5/10/30/60 minutes
   - +1h/-1h and +1d/-1d
