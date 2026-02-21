@@ -1,4 +1,4 @@
-const STORAGE_KEY = "xwatch_users_v1";
+const STORAGE_PREFIX = "xw_u_";
 const PROFILE_BOX_ID = "xwatch-profile-note-box";
 const STYLE_ID = "xwatch-style";
 const FALLBACK_ID_PREFIX = "h:";
@@ -680,35 +680,41 @@ function escapeRegExp(value) {
 }
 
 function snapshotFromRaw(raw) {
-  if (raw && typeof raw === "object" && raw.usersById && raw.handleToId) {
-    return {
-      usersById: raw.usersById && typeof raw.usersById === "object" ? raw.usersById : {},
-      handleToId: raw.handleToId && typeof raw.handleToId === "object" ? raw.handleToId : {}
-    };
-  }
+  const usersById = {};
+  const handleToId = {};
 
   if (raw && typeof raw === "object") {
-    const usersById = {};
-    const handleToId = {};
-    for (const [rawHandle, record] of Object.entries(raw)) {
-      const handle = normalizeHandle(rawHandle || record?.handle);
-      const comment = typeof record?.comment === "string" ? record.comment : "";
-      if (!handle || !comment.trim()) continue;
-      const userId = normalizeUserId(record?.userId) || makeFallbackUserId(handle);
-      if (!userId) continue;
-      usersById[userId] = {
-        userId,
-        handle,
-        comment,
-        createdAt: record?.createdAt || "",
-        updatedAt: record?.updatedAt || ""
-      };
-      handleToId[handle] = userId;
+    // If we're getting an events-based diff or full load
+    for (const [key, record] of Object.entries(raw)) {
+      if (key.startsWith(STORAGE_PREFIX)) {
+        const handle = normalizeHandle(record?.handle);
+        const comment = typeof record?.comment === "string" ? record.comment : "";
+        if (!handle || !comment.trim()) continue;
+        const userId = normalizeUserId(record?.userId) || makeFallbackUserId(handle);
+        if (!userId) continue;
+        usersById[userId] = {
+          userId,
+          handle,
+          comment
+        };
+        handleToId[handle] = userId;
+      } else if (!key.startsWith("xw_") && record && record.userId) { // fallback for direct record passes
+        const handle = normalizeHandle(record?.handle);
+        const comment = typeof record?.comment === "string" ? record.comment : "";
+        if (!handle || !comment.trim()) continue;
+        const userId = normalizeUserId(record?.userId) || makeFallbackUserId(handle);
+        if (!userId) continue;
+        usersById[userId] = {
+          userId,
+          handle,
+          comment
+        };
+        handleToId[handle] = userId;
+      }
     }
-    return { usersById, handleToId };
   }
 
-  return { usersById: {}, handleToId: {} };
+  return { usersById, handleToId };
 }
 
 function applySnapshot(snapshot) {
@@ -1303,10 +1309,28 @@ try {
   chrome.storage.onChanged.addListener((changes, areaName) => {
     if (isDevReloading) return;
     if (areaName !== "sync") return;
-    if (!changes[STORAGE_KEY]) return;
 
-    applySnapshot(changes[STORAGE_KEY].newValue);
-    scheduleRescan();
+    let changed = false;
+    for (const [key, change] of Object.entries(changes)) {
+      if (key.startsWith(STORAGE_PREFIX)) {
+        changed = true;
+        const userId = key.slice(STORAGE_PREFIX.length);
+        if (!change.newValue) {
+          // It's a deletion, we need to locate the handle properly
+          // Since we don't have the old handle directly, we re-fetch all for safety or just remove it if known
+          const oldUser = usersByIdCache[userId];
+          if (oldUser) {
+            removeLocalUser(userId, oldUser.handle);
+          }
+        } else {
+          upsertLocalUser(change.newValue);
+        }
+      }
+    }
+
+    if (changed) {
+      scheduleRescan();
+    }
   });
 } catch {
   // Ignore registration errors during extension reload.

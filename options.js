@@ -1,4 +1,4 @@
-const STORAGE_KEY = "xwatch_users_v1";
+const STORAGE_PREFIX = "xw_u_";
 let usersCache = {};
 
 function i18n(key, fallback = "") {
@@ -18,26 +18,23 @@ function setText(id, value) {
   if (el) el.textContent = value;
 }
 
-function toLocalDateText(isoText) {
-  if (!isoText) return "-";
-  const dt = new Date(isoText);
-  if (Number.isNaN(dt.getTime())) return "-";
-  return dt.toLocaleString();
-}
-
 function getSearchText() {
   const el = document.getElementById("search");
   return (el?.value || "").trim().toLowerCase();
 }
 
-function snapshotToUsersById(snapshotLike) {
-  if (!snapshotLike || typeof snapshotLike !== "object") return {};
-  if (snapshotLike.usersById && typeof snapshotLike.usersById === "object") {
-    return snapshotLike.usersById;
+function snapshotToUsersById(data) {
+  if (!data || typeof data !== "object") return {};
+  const usersById = {};
+  for (const [key, value] of Object.entries(data)) {
+    if (key.startsWith(STORAGE_PREFIX)) {
+      const userId = key.slice(STORAGE_PREFIX.length);
+      if (userId && value) {
+        usersById[userId] = value;
+      }
+    }
   }
-  return snapshotLike.users && typeof snapshotLike.users === "object"
-    ? snapshotLike.users
-    : {};
+  return usersById;
 }
 
 function renderViewer() {
@@ -49,11 +46,10 @@ function renderViewer() {
   const entries = Object.entries(usersCache || {}).map(([userId, user]) => ({
     userId,
     handle: String(user?.handle || ""),
-    comment: typeof user?.comment === "string" ? user.comment : "",
-    updatedAt: user?.updatedAt || ""
+    comment: typeof user?.comment === "string" ? user.comment : ""
   }));
 
-  entries.sort((a, b) => String(b.updatedAt || "").localeCompare(String(a.updatedAt || "")));
+  entries.sort((a, b) => a.userId.localeCompare(b.userId));
 
   const filtered = q
     ? entries.filter((item) =>
@@ -85,9 +81,6 @@ function renderViewer() {
     commentTd.className = "comment";
     commentTd.textContent = item.comment || "-";
 
-    const updatedTd = document.createElement("td");
-    updatedTd.textContent = toLocalDateText(item.updatedAt);
-
     const actionTd = document.createElement("td");
     const delButton = document.createElement("button");
     delButton.type = "button";
@@ -105,7 +98,6 @@ function renderViewer() {
     tr.appendChild(userIdTd);
     tr.appendChild(handleTd);
     tr.appendChild(commentTd);
-    tr.appendChild(updatedTd);
     tr.appendChild(actionTd);
     tbody.appendChild(tr);
   }
@@ -142,7 +134,7 @@ async function refreshUsage() {
   setText("remaining", formatBytes(info.remaining));
   setText("key-used", formatBytes(info.keyUsed));
 
-  usersCache = snapshotToUsersById(usersResponse?.snapshot || usersResponse || {});
+  usersCache = usersResponse?.usersById || {};
   setText("user-count", String(Object.keys(usersCache).length));
   renderViewer();
 }
@@ -161,7 +153,7 @@ function applyI18n() {
   setText("options-col-user-id", i18n("optionsColUserId", "User ID"));
   setText("options-col-handle", i18n("optionsColHandle", "Handle"));
   setText("options-col-comment", i18n("optionsColComment", "Comment"));
-  setText("options-col-updated", i18n("optionsColUpdated", "Updated"));
+
   setText("options-col-action", i18n("optionsColAction", "Action"));
   setText("viewer-empty", i18n("optionsViewerEmpty", "No data to display."));
 
@@ -237,9 +229,22 @@ document.addEventListener("DOMContentLoaded", () => {
 
 chrome.storage.onChanged.addListener((changes, areaName) => {
   if (areaName !== "sync") return;
-  if (!changes[STORAGE_KEY]) return;
 
-  usersCache = snapshotToUsersById(changes[STORAGE_KEY].newValue || {});
-  renderViewer();
-  refreshUsage();
+  let changed = false;
+  for (const [key, change] of Object.entries(changes)) {
+    if (key.startsWith(STORAGE_PREFIX)) {
+      changed = true;
+      const userId = key.slice(STORAGE_PREFIX.length);
+      if (!change.newValue) {
+        delete usersCache[userId];
+      } else {
+        usersCache[userId] = change.newValue;
+      }
+    }
+  }
+
+  if (changed) {
+    renderViewer();
+    refreshUsage();
+  }
 });

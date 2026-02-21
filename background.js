@@ -1,5 +1,5 @@
-const STORAGE_KEY = "xwatch_users_v1";
-const SCHEMA_VERSION = 2;
+const STORAGE_KEY_LEGACY = "xwatch_users_v1";
+const STORAGE_PREFIX = "xw_u_";
 const FALLBACK_ID_PREFIX = "h:";
 
 let memoCache = createEmptySnapshot();
@@ -7,15 +7,12 @@ let isLoaded = false;
 
 function createEmptySnapshot() {
   return {
-    version: SCHEMA_VERSION,
     usersById: {},
     handleToId: {}
   };
 }
 
-function nowIso() {
-  return new Date().toISOString();
-}
+
 
 function normalizeHandle(handle) {
   return String(handle || "").trim().replace(/^@/, "").toLowerCase();
@@ -38,13 +35,10 @@ function makeFallbackUserId(handle) {
 function normalizeUserRecord(userId, handle, record = {}) {
   const normalizedUserId = normalizeUserId(userId || record.userId);
   const normalizedHandle = normalizeHandle(handle || record.handle);
-  const ts = nowIso();
   return {
     userId: normalizedUserId,
     handle: normalizedHandle,
-    comment: typeof record.comment === "string" ? record.comment : "",
-    createdAt: typeof record.createdAt === "string" ? record.createdAt : ts,
-    updatedAt: typeof record.updatedAt === "string" ? record.updatedAt : ts
+    comment: typeof record.comment === "string" ? record.comment : ""
   };
 }
 
@@ -111,7 +105,7 @@ function isV2Snapshot(raw) {
   return Boolean(
     raw &&
     typeof raw === "object" &&
-    raw.version === SCHEMA_VERSION &&
+    raw.version === 2 &&
     raw.usersById &&
     typeof raw.usersById === "object" &&
     raw.handleToId &&
@@ -119,17 +113,22 @@ function isV2Snapshot(raw) {
   );
 }
 
-async function persistCache() {
-  memoCache.version = SCHEMA_VERSION;
-  await chrome.storage.sync.set({ [STORAGE_KEY]: memoCache });
+async function persistUser(user) {
+  if (!user || !user.userId) return;
+  await chrome.storage.sync.set({ [`${STORAGE_PREFIX}${user.userId}`]: user });
+}
+
+async function removePersistedUser(userId) {
+  if (!userId) return;
+  await chrome.storage.sync.remove(`${STORAGE_PREFIX}${userId}`);
 }
 
 function mergeFallbackRecordIntoUser(fallbackId, userId, handleHint = "") {
-  if (!fallbackId || !userId || fallbackId === userId) return false;
-  if (!isFallbackUserId(fallbackId)) return false;
+  if (!fallbackId || !userId || fallbackId === userId) return { mutated: false, deletedFallback: false };
+  if (!isFallbackUserId(fallbackId)) return { mutated: false, deletedFallback: false };
 
   const fallbackRecord = memoCache.usersById[fallbackId];
-  if (!fallbackRecord) return false;
+  if (!fallbackRecord) return { mutated: false, deletedFallback: false };
 
   const existingTarget = memoCache.usersById[userId];
   if (!existingTarget) {
@@ -147,8 +146,7 @@ function mergeFallbackRecordIntoUser(fallbackId, userId, handleHint = "") {
       handleHint || existingTarget.handle || fallbackRecord.handle,
       {
         ...existingTarget,
-        comment: fallbackRecord.comment,
-        createdAt: fallbackRecord.createdAt || existingTarget.createdAt
+        comment: fallbackRecord.comment
       }
     );
   }
@@ -161,20 +159,25 @@ function mergeFallbackRecordIntoUser(fallbackId, userId, handleHint = "") {
     }
   }
 
-  return true;
+  return { mutated: true, deletedFallback: true };
 }
 
 function bindHandleToUserId(userId, handle) {
   const normalizedUserId = normalizeUserId(userId);
   const normalizedHandle = normalizeHandle(handle);
-  if (!normalizedUserId || !normalizedHandle) return false;
+  if (!normalizedUserId || !normalizedHandle) return { mutated: false, deletedFallbackId: "" };
 
   let mutated = false;
+  let deletedFallbackId = "";
   const mappedUserId = memoCache.handleToId[normalizedHandle];
   if (mappedUserId && mappedUserId !== normalizedUserId) {
     if (isFallbackUserId(mappedUserId)) {
-      if (mergeFallbackRecordIntoUser(mappedUserId, normalizedUserId, normalizedHandle)) {
+      const result = mergeFallbackRecordIntoUser(mappedUserId, normalizedUserId, normalizedHandle);
+      if (result.mutated) {
         mutated = true;
+        if (result.deletedFallback) {
+          deletedFallbackId = mappedUserId;
+        }
       }
     }
   }
@@ -197,7 +200,7 @@ function bindHandleToUserId(userId, handle) {
     mutated = true;
   }
 
-  return mutated;
+  return { mutated, deletedFallbackId };
 }
 
 function lookupUserId(userId, handle, allowFallback) {
@@ -219,23 +222,51 @@ function lookupUserId(userId, handle, allowFallback) {
 async function ensureLoaded() {
   if (isLoaded) return;
 
-  const data = await chrome.storage.sync.get(STORAGE_KEY);
-  const raw = data?.[STORAGE_KEY];
+  const data = await chrome.storage.sync.get(null);
+  const rawLegacy = data?.[STORAGE_KEY_LEGACY];
 
-  let next;
-  if (isV2Snapshot(raw)) {
-    next = normalizeSnapshot(raw);
-  } else {
-    next = migrateLegacySnapshot(raw);
+  memoCache = createEmptySnapshot();
+
+  let hasLegacyData = false;
+  if (rawLegacy) {
+    hasLegacyData = true;
+    let next;
+    if (isV2Snapshot(rawLegacy)) {
+      next = normalizeSnapshot(rawLegacy);
+    } else {
+      next = migrateLegacySnapshot(rawLegacy);
+    }
+
+    // Migrate legacy data to new individual keys
+    for (const [userId, user] of Object.entries(next.usersById)) {
+      memoCache.usersById[userId] = normalizeUserRecord(userId, user.handle, user);
+      memoCache.handleToId[user.handle] = userId;
+      await persistUser(memoCache.usersById[userId]);
+    }
+    await chrome.storage.sync.remove(STORAGE_KEY_LEGACY);
   }
 
-  const changed = JSON.stringify(raw || null) !== JSON.stringify(next);
-  memoCache = next;
+  // Load from new individual keys
+  if (!hasLegacyData) {
+    for (const [key, value] of Object.entries(data || {})) {
+      if (key.startsWith(STORAGE_PREFIX)) {
+        const userId = key.slice(STORAGE_PREFIX.length);
+        if (!userId || !value) continue;
+        const normalized = normalizeUserRecord(userId, value.handle, value);
+        if (normalized.comment.trim()) {
+          memoCache.usersById[userId] = normalized;
+          if (normalized.handle) {
+            memoCache.handleToId[normalized.handle] = userId;
+          }
+        } else {
+          // Cleanup empty comment strays during load
+          await removePersistedUser(userId);
+        }
+      }
+    }
+  }
+
   isLoaded = true;
-
-  if (changed) {
-    await persistCache();
-  }
 }
 
 async function getUser(userId, handle) {
@@ -243,20 +274,23 @@ async function getUser(userId, handle) {
 
   const normalizedUserId = normalizeUserId(userId);
   const normalizedHandle = normalizeHandle(handle);
-  let mutated = false;
 
   if (normalizedUserId && normalizedHandle) {
-    mutated = bindHandleToUserId(normalizedUserId, normalizedHandle) || mutated;
+    const { mutated, deletedFallbackId } = bindHandleToUserId(normalizedUserId, normalizedHandle);
+    if (mutated) {
+      if (deletedFallbackId) await removePersistedUser(deletedFallbackId);
+      if (memoCache.usersById[normalizedUserId]) {
+        await persistUser(memoCache.usersById[normalizedUserId]);
+      }
+    }
   }
 
   const resolvedUserId = lookupUserId(normalizedUserId, normalizedHandle, false);
   if (!resolvedUserId) {
-    if (mutated) await persistCache();
     return { user: null, resolvedUserId: "" };
   }
 
   const user = memoCache.usersById[resolvedUserId] || null;
-  if (mutated) await persistCache();
   return { user, resolvedUserId };
 }
 
@@ -268,20 +302,23 @@ async function upsertUser(userId, handle, patch = {}) {
   let resolvedUserId = lookupUserId(explicitUserId, normalizedHandle, true);
   if (!resolvedUserId) return { user: null, deleted: false };
 
-  let mutated = false;
+  let deletedFallbackId = "";
   if (explicitUserId && normalizedHandle) {
-    mutated = bindHandleToUserId(explicitUserId, normalizedHandle) || mutated;
+    const bindResult = bindHandleToUserId(explicitUserId, normalizedHandle);
+    if (bindResult.deletedFallbackId) {
+      deletedFallbackId = bindResult.deletedFallbackId;
+    }
     resolvedUserId = explicitUserId;
   }
 
   const nextComment = typeof patch.comment === "string" ? patch.comment : "";
   if (!nextComment.trim()) {
     const deleted = await deleteUser(resolvedUserId, normalizedHandle);
+    if (deletedFallbackId) await removePersistedUser(deletedFallbackId);
     return { user: null, deleted };
   }
 
   const base = memoCache.usersById[resolvedUserId] || normalizeUserRecord(resolvedUserId, normalizedHandle, {});
-  const ts = nowIso();
   const merged = normalizeUserRecord(
     resolvedUserId,
     normalizedHandle || base.handle,
@@ -289,17 +326,14 @@ async function upsertUser(userId, handle, patch = {}) {
       ...base,
       ...patch,
       userId: resolvedUserId,
-      handle: normalizedHandle || base.handle,
-      updatedAt: ts
+      handle: normalizedHandle || base.handle
     }
   );
-  merged.updatedAt = ts;
 
   const previousHandle = normalizeHandle(base.handle);
   const nextHandle = normalizeHandle(merged.handle);
   if (previousHandle && previousHandle !== nextHandle && memoCache.handleToId[previousHandle] === resolvedUserId) {
     delete memoCache.handleToId[previousHandle];
-    mutated = true;
   }
 
   memoCache.usersById[resolvedUserId] = merged;
@@ -307,7 +341,11 @@ async function upsertUser(userId, handle, patch = {}) {
     memoCache.handleToId[nextHandle] = resolvedUserId;
   }
 
-  await persistCache();
+  if (deletedFallbackId && deletedFallbackId !== resolvedUserId) {
+    await removePersistedUser(deletedFallbackId);
+  }
+  await persistUser(merged);
+
   return { user: merged, deleted: false };
 }
 
@@ -325,13 +363,17 @@ async function deleteUser(userId, handle) {
     }
   }
 
-  await persistCache();
+  await removePersistedUser(resolvedUserId);
   return true;
 }
 
 async function getStorageInfo() {
   const totalUsed = await chrome.storage.sync.getBytesInUse(null);
-  const keyUsed = await chrome.storage.sync.getBytesInUse(STORAGE_KEY);
+
+  const allData = await chrome.storage.sync.get(null);
+  const xwKeys = Object.keys(allData || {}).filter(k => k.startsWith(STORAGE_PREFIX));
+  const keyUsed = xwKeys.length > 0 ? await chrome.storage.sync.getBytesInUse(xwKeys) : 0;
+
   const quota = chrome.storage.sync.QUOTA_BYTES;
   return {
     quota,
@@ -347,10 +389,32 @@ chrome.runtime.onInstalled.addListener(async () => {
 
 chrome.storage.onChanged.addListener((changes, areaName) => {
   if (areaName !== "sync") return;
-  if (!changes[STORAGE_KEY]) return;
 
-  memoCache = normalizeSnapshot(changes[STORAGE_KEY].newValue);
-  isLoaded = true;
+  let changed = false;
+  for (const [key, change] of Object.entries(changes)) {
+    if (key.startsWith(STORAGE_PREFIX)) {
+      changed = true;
+      const userId = key.slice(STORAGE_PREFIX.length);
+
+      if (!change.newValue) {
+        // User deleted
+        if (memoCache.usersById[userId]) {
+          const handle = memoCache.usersById[userId].handle;
+          if (handle && memoCache.handleToId[handle] === userId) {
+            delete memoCache.handleToId[handle];
+          }
+          delete memoCache.usersById[userId];
+        }
+      } else {
+        // User added/updated
+        const record = change.newValue;
+        memoCache.usersById[userId] = record;
+        if (record.handle) {
+          memoCache.handleToId[record.handle] = userId;
+        }
+      }
+    }
+  }
 });
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
@@ -378,20 +442,28 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       }
       case "XWATCH_DELETE_ALL_USERS": {
         await ensureLoaded();
+        const keysToRemove = Object.keys(memoCache.usersById).map(id => `${STORAGE_PREFIX}${id}`);
+        if (keysToRemove.length > 0) {
+          await chrome.storage.sync.remove(keysToRemove);
+        }
         memoCache = createEmptySnapshot();
-        await persistCache();
         sendResponse({ ok: true });
         return;
       }
       case "XWATCH_IMPORT_USERS": {
         await ensureLoaded();
         const { users, mode } = message;
+
         if (mode === "replace") {
+          const keysToRemove = Object.keys(memoCache.usersById).map(id => `${STORAGE_PREFIX}${id}`);
+          if (keysToRemove.length > 0) {
+            await chrome.storage.sync.remove(keysToRemove);
+          }
           memoCache = createEmptySnapshot();
         }
 
-        let mutated = false;
         const usersArray = Array.isArray(users) ? users : Object.values(users || {});
+        const updates = {};
         for (const record of usersArray) {
           if (!record) continue;
           const normalizedHandle = normalizeHandle(record.handle);
@@ -407,8 +479,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
               ...base,
               ...record,
               userId: targetUserId,
-              handle: normalizedHandle || base.handle,
-              updatedAt: record.updatedAt || base.updatedAt || nowIso()
+              handle: normalizedHandle || base.handle
             }
           );
 
@@ -416,11 +487,11 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
           if (merged.handle) {
             memoCache.handleToId[merged.handle] = targetUserId;
           }
-          mutated = true;
+          updates[`${STORAGE_PREFIX}${targetUserId}`] = merged;
         }
 
-        if (mutated || mode === "replace") {
-          await persistCache();
+        if (Object.keys(updates).length > 0) {
+          await chrome.storage.sync.set(updates);
         }
         sendResponse({ ok: true });
         return;
