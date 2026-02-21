@@ -30,7 +30,11 @@ function snapshotToUsersById(data) {
     if (key.startsWith(STORAGE_PREFIX)) {
       const userId = key.slice(STORAGE_PREFIX.length);
       if (userId && value) {
-        usersById[userId] = value;
+        usersById[userId] = {
+          userId: value.i || value.userId || userId,
+          handle: value.h || value.handle || "",
+          comment: value.c || value.comment || ""
+        };
       }
     }
   }
@@ -238,7 +242,11 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
       if (!change.newValue) {
         delete usersCache[userId];
       } else {
-        usersCache[userId] = change.newValue;
+        usersCache[userId] = {
+          userId: change.newValue.i || change.newValue.userId || userId,
+          handle: change.newValue.h || change.newValue.handle || "",
+          comment: change.newValue.c || change.newValue.comment || ""
+        };
       }
     }
   }

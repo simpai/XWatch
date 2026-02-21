@@ -115,7 +115,11 @@ function isV2Snapshot(raw) {
 
 async function persistUser(user) {
   if (!user || !user.userId) return;
-  await chrome.storage.sync.set({ [`${STORAGE_PREFIX}${user.userId}`]: user });
+  const packed = { i: user.userId };
+  if (user.handle) packed.h = user.handle;
+  if (user.comment) packed.c = user.comment;
+
+  await chrome.storage.sync.set({ [`${STORAGE_PREFIX}${user.userId}`]: packed });
 }
 
 async function removePersistedUser(userId) {
@@ -252,7 +256,12 @@ async function ensureLoaded() {
       if (key.startsWith(STORAGE_PREFIX)) {
         const userId = key.slice(STORAGE_PREFIX.length);
         if (!userId || !value) continue;
-        const normalized = normalizeUserRecord(userId, value.handle, value);
+
+        const rawHandle = value.h || value.handle;
+        const rawComment = value.c || value.comment;
+        const rawUserId = value.i || value.userId || userId;
+
+        const normalized = normalizeUserRecord(rawUserId, rawHandle, { ...value, comment: rawComment });
         if (normalized.comment.trim()) {
           memoCache.usersById[userId] = normalized;
           if (normalized.handle) {
@@ -407,7 +416,9 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
         }
       } else {
         // User added/updated
-        const record = change.newValue;
+        const rawHandle = change.newValue.h || change.newValue.handle;
+        const rawComment = change.newValue.c || change.newValue.comment;
+        const record = normalizeUserRecord(userId, rawHandle, { ...change.newValue, comment: rawComment });
         memoCache.usersById[userId] = record;
         if (record.handle) {
           memoCache.handleToId[record.handle] = userId;
@@ -487,7 +498,11 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
           if (merged.handle) {
             memoCache.handleToId[merged.handle] = targetUserId;
           }
-          updates[`${STORAGE_PREFIX}${targetUserId}`] = merged;
+
+          const packed = { i: targetUserId };
+          if (merged.handle) packed.h = merged.handle;
+          if (merged.comment) packed.c = merged.comment;
+          updates[`${STORAGE_PREFIX}${targetUserId}`] = packed;
         }
 
         if (Object.keys(updates).length > 0) {

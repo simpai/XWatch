@@ -680,6 +680,13 @@ function escapeRegExp(value) {
 }
 
 function snapshotFromRaw(raw) {
+  if (raw && typeof raw === "object" && raw.usersById && raw.handleToId) {
+    return {
+      usersById: raw.usersById && typeof raw.usersById === "object" ? raw.usersById : {},
+      handleToId: raw.handleToId && typeof raw.handleToId === "object" ? raw.handleToId : {}
+    };
+  }
+
   const usersById = {};
   const handleToId = {};
 
@@ -1323,7 +1330,11 @@ try {
             removeLocalUser(userId, oldUser.handle);
           }
         } else {
-          upsertLocalUser(change.newValue);
+          upsertLocalUser({
+            userId: change.newValue.i || change.newValue.userId || userId,
+            handle: change.newValue.h || change.newValue.handle || "",
+            comment: change.newValue.c || change.newValue.comment || ""
+          });
         }
       }
     }
